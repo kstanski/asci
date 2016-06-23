@@ -32,6 +32,9 @@ function molecules = read_data(filename,N)
                     molecules(count_mol) = molecule;
                 end      
         end
+        if rem(count_mol,1000) == 0 && count_at == 1
+            disp(sprintf('molecules read: %d',count_mol))
+        end
         line = fgetl(fid);
     end
 

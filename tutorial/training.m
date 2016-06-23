@@ -2,13 +2,16 @@
 train_no = 1000;
 all_no = 7102;
 
+disp('reading data')
 molecules = read_data('dsgdb7ae2.xyz',all_no);
 %molecules = read_data('test_data.xyz',2);
+
 below5atoms = repmat(Molecule(0), train_no, 1);
 below5_last = 0;
 above5atoms = repmat(Molecule(0), all_no, 1);
 above5_last = 0;
 
+disp('searching for small molecules')
 for i = 1:length(molecules)
     m = molecules(i);
     if m.size < 5
@@ -26,6 +29,7 @@ above5atoms = above5atoms(1:above5_last);
 [~,idx] = sort([above5atoms.size]);
 above5atoms = above5atoms(idx);
 
+disp('stratification')
 prediction_set = repmat(Molecule(0), all_no-train_no, 1);
 training_set = repmat(Molecule(0), train_no-below5_last, 1);    %for above5 only!
 [training_set,prediction_set] = stratify(above5atoms,training_set,prediction_set);

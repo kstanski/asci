@@ -6,15 +6,14 @@ n = length(training_set_proper);
 X = cell(n,1);
 Y = zeros(n,1);
 
+disp('computing Coulomb matrices')
 for i = 1:n
     T = training_set_proper(i);
     X{i} = compute_coulomb_matrix(T,23);
     Y(i) = T.energy;
 end
 
-%lambda = 10^(-6.5);
-%sigma = 724;
-
+disp('kernelising')
 K = zeros(n);
 for i = 1:n
     for j = 1:i
@@ -24,13 +23,13 @@ for i = 1:n
     end
 end
 
+disp('solving equation for alphas')
 K = K + lambda*eye(n);
-%U = chol(K);    %Cholesky decomposition
-%alpha = forward_backward_substitution(U,Y);
 alpha = K\Y;
 
 
 %Prediction
+disp('making prediction')
 m_p = length(hold_out_set);
 X_p = cell(m_p,1);
 Y_p = zeros(m_p,1);
@@ -58,6 +57,10 @@ a = linspace(-2200,-1000,2);
 hold on
 scatter(Y_p,f,10,'filled');
 plot(a,a,'k');
+xlabel('reference (kcal/mol)');
+ylabel('predicted (kcal/mol)');
+stats = sprintf('RMSE: %f\nMAE: %f\nR2: %f\n',RMSE,MAE,R2);
+text(-1500,-1900,stats);
 
 end
 
