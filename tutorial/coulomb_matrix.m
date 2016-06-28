@@ -1,5 +1,5 @@
 
-function Coulomb = compute_coulomb_matrix(molecule,max_size)
+function Coulomb = coulomb_matrix(molecule,max_size)
     s = size(molecule.atoms.ff_coord,1);
     C = zeros(s);
     for i = 1:s

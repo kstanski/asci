@@ -1,15 +1,15 @@
 
-function [RMSE,MAE,R2] = basic_model(lambda,sigma,training_set_proper,hold_out_set,kernel)
+function [RMSE,MAE,R2] = krr(lambda,sigma,training_set_proper,hold_out_set,kernel,descriptor)
 
 %Training
 n = length(training_set_proper);
 X = cell(n,1);
 Y = zeros(n,1);
 
-disp('computing Coulomb matrices')
+disp('computing descriptor vectors')
 for i = 1:n
     T = training_set_proper(i);
-    X{i} = compute_coulomb_matrix(T,23);
+    X{i} = descriptor(T,23);
     Y(i) = T.energy;
 end
 
@@ -36,7 +36,7 @@ Y_p = zeros(m_p,1);
 
 for i = 1:m_p
     T_p = hold_out_set(i);
-    X_p{i} = compute_coulomb_matrix(T_p,23);
+    X_p{i} = descriptor(T_p,23);
     Y_p(i) = T_p.energy;
 end
 
@@ -63,4 +63,3 @@ stats = sprintf('RMSE: %f\nMAE: %f\nR2: %f\n',RMSE,MAE,R2);
 text(-1500,-1900,stats);
 
 end
-
