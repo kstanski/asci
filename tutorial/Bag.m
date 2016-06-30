@@ -17,4 +17,3 @@ classdef Bag
     end
     
 end
-

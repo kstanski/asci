@@ -1,8 +1,8 @@
 
-lambda = 2.^[-40:2:-30];
-sigma = 2.^[35:0.5:45];
+lambda = 2.^[-40:0.5:-5];
+sigma = 2.^[5:0.5:18];
 
-kernel = @laplacian_kernel;
+kernel = @gaussian_kernel;
 descriptor = @bag_of_bonds;
 verbose = false;
 
