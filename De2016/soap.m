@@ -1,13 +1,13 @@
-
+%local similarity measure
 function k = soap(X1,X2,zeta)
 k = unnormalised_soap(X1,X2)/sqrt(unnormalised_soap(X1,X1)*unnormalised_soap(X2,X2));
 k = k^zeta;
 end
 
 function sum = unnormalised_soap(X1,X2)
-l_max = 16;
+l_max = 2;
 sum = 0;
-for l = 1:l_max
+for l = 0:l_max
     for m1 = 0:l
         for m2 = 0:l
             val = I(l,m1,m2,X1,X2);
@@ -44,8 +44,16 @@ end
 
 %modified spherical bessel function of the first kind
 function sb = spherical_bessel(l,x)
-i = sqrt(-1);
-sb = sqrt(pi/(2*x)) * besselj(l+1/2,i*x) * i^-l;
+if abs(x) <= realmin
+    if l == 0
+        sb = 1;
+    else
+        sb = 0;
+    end
+else
+    i = sqrt(-1);
+    sb = sqrt(pi/(2*x)) * besselj(l+1/2,i*x) * i^-l;
+end
 end
 
 function y = spherical_harmonic(l,m,r_unit)
