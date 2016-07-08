@@ -1,6 +1,7 @@
 %A and B are cell arrays of atom neighbourhoods of molecules A and B.
 function ss = structural_similarity(A,B)
-gamma = 0.5;    %regularisation parameter
+gamma = 9;
+zeta = 1;
 
 n = length(A);
 LSA = zeros(n,1);
@@ -18,7 +19,7 @@ C = zeros(n,m);
 for i = 1:n
     for j = 1:m
         val = local_similarity(A{i},B{j})/sqrt(LSA(i)*LSB(j));
-        C(i,j) = val;
+        C(i,j) = val^zeta;
     end
 end
 ss = trace(sinkhorn(C,gamma)'*C);

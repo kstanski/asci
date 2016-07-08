@@ -1,5 +1,5 @@
 
-function [f,RMSE,MAE,R2] = krr_de(training_set_proper,hold_out_set,lambda,verbose)
+function [f,RMSE,MAE,R2] = krr_de(training_set_proper,hold_out_set,lambda,zeta,verbose)
 if verbose; disp('training'); end
 if verbose; disp('computing neighbourhoods'); end
 s = size(training_set_proper,1);
@@ -22,7 +22,7 @@ end
 if verbose; disp('computing structural similarity'); end
 K = zeros(s);
 for i = 1:s
-    i
+    disp(i);
     K(i,i) = 1;
     for j = i+1:s
         k_ij = structural_similarity(Ns{i}, Ns{j});
@@ -33,7 +33,7 @@ for i = 1:s
 end
 
 if verbose; disp('solving equation for alphas'); end
-K = K + lambda*eye(s);
+K = K.^zeta + lambda*eye(s)
 alpha = K\energy;
 
 
@@ -59,6 +59,7 @@ end
 if verbose; disp('computing structural similarity'); end
 L = zeros(s,s_p);
 for i = 1:s
+    disp(i);
     for j = 1:s_p
         l_ij = structural_similarity(Ns{i}, Ns_p{j});
         l_ij = l_ij/sqrt(self_similarity(i)*self_similarity_p(j));
@@ -66,7 +67,8 @@ for i = 1:s
     end
 end
 
-f = L.'*alpha;
+L = L.^zeta;
+f = L'*alpha;
 
 RMSE = rms(energy_p-f);
 MAE = mean(abs(energy_p-f));
