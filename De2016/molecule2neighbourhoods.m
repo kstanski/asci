@@ -10,7 +10,7 @@ ntypes = 5;
 type2index = containers.Map({'H','C','N','O','S'},[1:ntypes]);
 types = char(M.atoms.types);   %'H','C','N','O','S'
 coords = M.atoms.ff_coord;
-centers = sum(max_types_counts(2:ntypes));    %only non-H
+centers = sum(max_types_counts(1:ntypes));
 
 n = size(coords,1);
 neighbour_matrix = zeros(n);
@@ -37,7 +37,7 @@ types_count = zeros(ntypes,1);
 for i = 1:n
     t = type2index(types(i));
     types_count(t) = types_count(t) + 1;
-    if t > 1
+    if t > 0    %include all species as centers
         nhood_i = cell(ntypes,1);
         for type = 1:ntypes
             nhood_i{type} = zeros(no_each_type(i,type),3);
@@ -56,7 +56,7 @@ for i = 1:n
 end
 
 top_up = max_types_counts - types_count;
-for t = 2:ntypes
+for t = 1:ntypes
     for i = 1:top_up(t)
         nlast = nlast + 1;
         nhood_i = cell(ntypes,1);

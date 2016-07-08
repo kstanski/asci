@@ -1,6 +1,6 @@
 %local similarity measure
 function sum = soap(X1,X2)
-l_max = 3;
+l_max = 12;
 sum = 0;
 for l = 0:l_max
     sum = sum + I(l,X1,X2);
@@ -27,14 +27,14 @@ for idx1 = 1:sx1
 end
 
 s = 0;
-for m1 = 0:l
-    for m2 = 0:l
+for m1 = 1:2*l+1
+    for m2 = 1:2*l+1
         sum = 0;
         for idx1 = 1:size(X1,1)
             for idx2 = 1:size(X2,1)
                 v = SB(idx1,idx2);
-                v = v*SH1(idx1,m1+1);
-                v = v*conj(SH2(idx2,m2+1));
+                v = v*SH1(idx1,m1);
+                v = v*conj(SH2(idx2,m2));
                 sum = sum + v;
             end
         end
@@ -64,13 +64,18 @@ end
 
 function SH = spherical_harmonics(l,X)
 size_x = size(X,1);
-SH = zeros(size_x,l+1);
+SH = zeros(size_x,2*l+1);
 for idx = 1:size_x
     [theta,phi] = direction(X(idx,:));
     lp = legendre(l,cos(theta));
-    for m = 0:l
-        v = lp(m+1) * exp(sqrt(-1)*m*phi);
-        SH(idx,m+1) = v * sqrt((2*l+1)/(4*pi)*factorial(l-m)/factorial(l+m));
+    for m = -l:l
+        if m > 0
+            v = lp(m+1);
+        else
+            v = (-1)^m*factorial(l-m)/factorial(l+m)*lp(-m+1);
+        end
+        v = v * exp(sqrt(-1)*m*phi);
+        SH(idx,m+l+1) = v * sqrt((2*l+1)/(4*pi)*factorial(l-m)/factorial(l+m));
     end
 end
 end

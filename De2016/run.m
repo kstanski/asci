@@ -1,11 +1,11 @@
-nt = 3;
+nt = 2;
 train = repmat(Molecule(0), nt, 1);
-ne = 2;
+ne = 1;
 evaluate = repmat(Molecule(0), ne, 1);
 [train,evaluate] = stratify(hold_out_set(1:(nt+ne)),train,evaluate);
 
 
-lambda = 10^-1;
+lambda = 10^(-12);
 zeta = 10^0;
 verbose = true;
 
