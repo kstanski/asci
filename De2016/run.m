@@ -1,6 +1,6 @@
-nt = 2;
+nt = 22;
 train = repmat(Molecule(0), nt, 1);
-ne = 1;
+ne = 10;
 evaluate = repmat(Molecule(0), ne, 1);
 [train,evaluate] = stratify(hold_out_set(1:(nt+ne)),train,evaluate);
 

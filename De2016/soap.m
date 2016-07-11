@@ -1,6 +1,6 @@
 %local similarity measure
 function sum = soap(X1,X2)
-l_max = 12;
+l_max = 2;
 sum = 0;
 for l = 0:l_max
     sum = sum + I(l,X1,X2);
@@ -63,6 +63,24 @@ end
 end
 
 function SH = spherical_harmonics(l,X)
+size_x = size(X,1);
+SH = zeros(size_x,2*l+1);
+for idx = 1:size_x
+    [theta,phi] = direction(X(idx,:));
+    lp = legendre(l,cos(theta));
+    for m = 0:l
+        v = lp(m+1);
+        v = v * exp(sqrt(-1)*m*phi);
+        v = v * sqrt((2*l+1)/(4*pi)*factorial(l-m)/factorial(l+m));
+        SH(idx,l+1+m) = v;
+        if m > 0
+            SH(idx,l+1-m) = -1^-m * conj(v);
+        end
+    end
+end
+end
+
+function SH = spherical_harmonics_old(l,X)
 size_x = size(X,1);
 SH = zeros(size_x,2*l+1);
 for idx = 1:size_x
