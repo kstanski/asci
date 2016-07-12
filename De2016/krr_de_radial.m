@@ -1,0 +1,81 @@
+
+function [f,RMSE,MAE,R2] = krr_de_radial(training_set_proper,hold_out_set,lambda,zeta,verbose)
+if verbose; disp('training'); end
+if verbose; disp('computing spectra'); end
+s = size(training_set_proper,1);
+Ss = cell(s,1);    %spectras
+energy = zeros(s,1);
+for idx = 1:s
+    disp(idx);
+    t = training_set_proper(idx);
+    N = molecule2neighbourhoods(t);
+    Ss{idx} = neighbourhoods2spectra(N);
+    energy(idx) = t.energy;
+end
+
+%Training
+if verbose; disp('computing self similarity'); end
+self_similarity = zeros(s,1);  %for efficient normalisation
+for idx = 1:s
+    spectra = Ss{idx};
+    self_similarity(idx) = radial_structural_similarity(spectra,spectra);
+end
+
+if verbose; disp('computing structural similarity'); end
+K = zeros(s);
+for i = 1:s
+    K(i,i) = 1;
+    for j = i+1:s
+        k_ij = radial_structural_similarity(Ss{i}, Ss{j});
+        k_ij = k_ij/sqrt(self_similarity(i)*self_similarity(j));
+        K(i,j) = k_ij;
+        K(j,i) = k_ij;
+    end
+end
+
+if verbose; disp('solving equation for alphas'); end
+K = K.^zeta + lambda*eye(s);
+alpha = K\energy;
+
+
+%Prediction
+if verbose; disp('making prediction'); end
+if verbose; disp('computing spectra'); end
+s_p = size(hold_out_set,1);
+Ss_p = cell(s_p,1);
+energy_p = zeros(s_p,1);
+for idx = 1:s_p
+    disp(idx);
+    h = hold_out_set(idx);
+    N_p = molecule2neighbourhoods(h);
+    Ss_p{idx} = neighbourhoods2spectra(N_p);
+    energy_p(idx) = h.energy;
+end
+
+if verbose; disp('computing self similarity'); end
+self_similarity_p = zeros(s_p,1);  %for efficient normalisation
+for idx = 1:s_p
+    spectra_p = Ss_p{idx};
+    self_similarity_p(idx) = radial_structural_similarity(spectra_p,spectra_p);
+end
+
+if verbose; disp('computing structural similarity'); end
+L = zeros(s,s_p);
+for i = 1:s
+    for j = 1:s_p
+        l_ij = radial_structural_similarity(Ss{i}, Ss_p{j});
+        l_ij = l_ij/sqrt(self_similarity(i)*self_similarity_p(j));
+        L(i,j) = l_ij;
+    end
+end
+
+L = L.^zeta;
+f = L'*alpha;
+
+RMSE = rms(energy_p-f);
+MAE = mean(abs(energy_p-f));
+R2 = corr(energy_p,f)^2;
+
+if verbose; plot_at_energy(energy_p,f); end
+
+end

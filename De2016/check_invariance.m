@@ -20,13 +20,16 @@ for i = 1:n_at
 end
 
 %arbitrary alteration
-%tsp.atoms.ff_coord(2,3) = tsp.atoms.ff_coord(2,3) + 1;
+tsp.atoms.ff_coord(2,3) = tsp.atoms.ff_coord(2,3) + 1;
 
 N1 = molecule2neighbourhoods(training_set_proper(1));
 N2 = molecule2neighbourhoods(tsp);
 
+S1 = neighbourhoods2spectra(N1);
+S2 = neighbourhoods2spectra(N2);
+
 tic
-ss = structural_similarity(N1,N2);
-ss = ss/sqrt(structural_similarity(N1,N1)*structural_similarity(N2,N2));
+ss = radial_structural_similarity(S1,S2);
+ss = ss/sqrt(radial_structural_similarity(S1,S1)*radial_structural_similarity(S2,S2));
 disp(sprintf('%.10f',ss))
 toc

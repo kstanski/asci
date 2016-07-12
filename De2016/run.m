@@ -1,6 +1,6 @@
-nt = 22;
+nt = 10;
 train = repmat(Molecule(0), nt, 1);
-ne = 10;
+ne = 3;
 evaluate = repmat(Molecule(0), ne, 1);
 [train,evaluate] = stratify(hold_out_set(1:(nt+ne)),train,evaluate);
 
@@ -10,5 +10,5 @@ zeta = 10^0;
 verbose = true;
 
 tic
-[~,RMSE,MAE,R2] = krr_de(train,evaluate,lambda,zeta,verbose)
+[~,RMSE,MAE,R2] = krr_de_radial(training_set_proper,hold_out_set,lambda,zeta,verbose)
 toc
