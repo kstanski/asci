@@ -1,6 +1,6 @@
 %local similarity measure
 function sum = soap(X1,X2)
-l_max = 0;
+l_max = 40;
 sum = 0;
 for l = 0:l_max
     sum = sum + I(l,X1,X2);

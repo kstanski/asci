@@ -10,7 +10,7 @@ sum = 0;
 for i = 1:ntypes
     for j = 1:ntypes
         if K(i,j) ~= 0
-            sum = sum + K(i,j)*dot(S1{i},S2{j});
+            sum = sum + K(i,j)*real(dot(S1{i},S2{j}));
         end
     end
 end

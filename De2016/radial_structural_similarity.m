@@ -1,18 +1,9 @@
 %A and B are arrays of atom neighbourhoods spectra of molecules A and B.
-function ss = radial_structural_similarity(A,B)
+function ss = radial_structural_similarity(A,B,LSA,LSB)
 gamma = 0.5;    %regularisation parameter
 
-n = size(A,1);
-LSA = zeros(n,1);
-for i = 1:n
-    LSA(i) = radial_local_similarity(A(i,:),A(i,:));
-end
-
-m = size(B,1);
-LSB = zeros(m,1);
-for j = 1:m
-    LSB(j) = radial_local_similarity(B(j,:),B(j,:));
-end
+n = size(A,1);    %should be same as A
+m = size(B,1);    %same as B
 
 C = zeros(n,m);
 for i = 1:n

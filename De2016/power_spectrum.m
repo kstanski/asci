@@ -1,8 +1,8 @@
 %rotationally invariant power spectrum
 function P = power_spectrum(X)
 
-l_max = 10;      %spherical harmonics
-n_max = 9;      %radial basis functions
+l_max = 12;      %spherical harmonics
+n_max = 10;      %radial basis functions
 r_cut = 3;
 
 [Theta,Phi,R] = spherical_coords(X);
@@ -39,7 +39,6 @@ P = P(:);
 if norm(P) ~= 0
     P = P/norm(P);
 end
-P = real(P);
 end
 
 function [Theta,Phi,R] = spherical_coords(X)

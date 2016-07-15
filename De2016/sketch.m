@@ -1,14 +1,20 @@
+verbose = false;
 
-r_cut = 3;
-R = linspace(0,r_cut,100);
-G = zeros(length(R),1);
+if verbose; disp('training'); end
+if verbose; disp('computing spectra'); end
+s = size(training_set_proper,1);
+Ss = cell(s,1);    %spectras
+energy = zeros(s,1);
+idx = 1;
+disp(idx);
+t = training_set_proper(idx);
+N = molecule2neighbourhoods(t);
+Ss{idx} = neighbourhoods2spectra(N);
+energy(idx) = t.energy;
 
-hold on
-for n = 1:4
-    for i = 1:length(R)
-        G(i) = radial_basis_function(R(i),r_cut,n);
-    end
-    plot(R,G);
-end
-hold off
-
+%Training
+if verbose; disp('computing self similarity'); end
+self_similarity = zeros(s,1);  %for efficient normalisation
+idx = 1;
+spectra = Ss{idx};
+radial_structural_similarity(spectra,spectra)
