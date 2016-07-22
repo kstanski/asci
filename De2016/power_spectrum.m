@@ -10,7 +10,9 @@ r_cut = 3;
 RBF = zeros(length(R),n_max);
 for idx = 1:length(R)
     for n = 1:n_max
-        RBF(idx,n) = radial_basis_function(R(idx),r_cut,n,n_max);
+        %RBF(idx,n) = radial_basis_function(R(idx),r_cut,n,n_max);
+        %RBF(idx,n) = gaussian_rbf(R(idx),r_cut,n,n_max);
+        RBF(idx,n) = square_rbf(R(idx),r_cut,n,n_max);
     end
 end
 
@@ -31,6 +33,11 @@ for l = 0:l_max
                     P(l+1,n2,n1) = P(l+1,n2,n1) + conj(c2)*c1;
                 end
             end
+            
+            P(l+1,n1,n2) = P(l+1,n1,n2) * pi*sqrt(8/(2*l+1));
+            if n1 ~= n2
+                P(l+1,n2,n1) = P(l+1,n2,n1) * pi*sqrt(8/(2*l+1));
+            end
         end
     end
 end
@@ -49,7 +56,7 @@ else
     Elev = 0;
     R = 0;
 end
-Phi = 2*pi - Elev;
+Phi = pi/2 - Elev;    %0< phi < pi
 end
 
 function SH = spherical_harmonics(l,Theta,Phi)
@@ -71,6 +78,49 @@ for idx = 1:size_x
 end
 end
 
+function g = gaussian_rbf(r,r_cut,n,n_max)
+sigma_param = 10^3;
+
+step = r_cut/n_max;    %distance between gaussian means
+mean = (n-1)*step;
+sigma = step*sigma_param;
+g = exp(-(norm(r-mean)^2)/(2*sigma^2));
+end
+
+function g = square_rbf(r,r_cut,n,n_max)
+param = 4;
+step = r_cut/n_max;    %distance between means
+
+S = zeros(n_max);
+for i = 1:n_max
+    for j = 1:n_max
+        low_i = (i-1-n_max/param)*step;
+        high_i = (i+n_max/param)*step;
+        low_j = (j-1-n_max/param)*step;
+        high_j = (j+n_max/param)*step;
+        if low_j < high_i && high_i <= high_j
+            S(i,j) = high_i-low_j;
+        else
+            if low_j < low_i && low_i <= high_j
+                S(i,j) = high_j-low_i;
+            end
+        end
+        S(i,j) = S(i,j)/sqrt((high_i-low_i)*(high_j-low_j));    %normalise
+    end
+end
+
+W = S^-0.5;
+
+g = 0;
+for alpha = 1:n_max
+    low = (alpha-1-n_max/param)*step;
+    high = (alpha+n_max/param)*step;
+    if low <= r && r < high
+        g = g + W(n,alpha)/(high-low);
+    end
+end
+end
+
 function g = radial_basis_function(r,r_cut,n,n_max)
 S = zeros(n_max);
 for i = 1:n_max
@@ -79,7 +129,8 @@ for i = 1:n_max
     end
 end
 
-W = S^-0.5;
+%W = S^-0.5;
+W = S;
 
 g = 0;
 for alpha = 1:n_max

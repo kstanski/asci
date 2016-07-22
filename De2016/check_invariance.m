@@ -30,8 +30,8 @@ N2 = molecule2neighbourhoods(tsp);
 
 n1 = N1{1};
 n1 = n1{1};
-n1 = quatrotate([pi/0.9,pi/2.2,pi/3.01,pi/4.1],n1);
-%{
+n1 = quatrotate([pi/0.9,pi,pi/3.01,pi/4.1],n1);
+
 for i = 1:size(n1,1)
     x = n1(i,1);
     y = n1(i,2);
@@ -43,11 +43,13 @@ for i = 1:size(n1,1)
     [x,y,z] = sph2cart(a,b,c);
     n1(i,:) = [x,y,z];
 end
-%}
+
+%n1 = rotate_invariant(n1);
 ps1 = power_spectrum(n1);
 n2 = N2{1};
+%n2{1} = rotate_invariant(n2{1});
 ps2 = power_spectrum(n2{1});
-soap(n1,n2{1})/sqrt(soap(n1,n1)*soap(n2{1},n2{1}))
+%soap(n1,n2{1})/sqrt(soap(n1,n1)*soap(n2{1},n2{1}))
 dot(ps1,ps2)
 
 %S1 = neighbourhoods2spectra(N1);
