@@ -1,0 +1,17 @@
+# depslib dependency file v1.0
+1470142919 source:/m/home/home3/32/stanskk1/data/Documents/asci/de2016cimpl/main.cpp
+	<fstream>
+	<string>
+	<iostream>
+	"read_data.h"
+
+1470131197 /m/home/home3/32/stanskk1/data/Documents/asci/de2016cimpl/printout.h
+
+1470142952 /m/home/home3/32/stanskk1/data/Documents/asci/de2016cimpl/read_data.h
+
+1470229095 source:/m/home/home3/32/stanskk1/data/Documents/asci/de2016cimpl/read_data.cpp
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+
