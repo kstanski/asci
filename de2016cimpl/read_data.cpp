@@ -26,7 +26,7 @@ typedef struct molecule
 typedef struct neighbourhood
 {
     float coords[ATOM_TYPES][MAX_ATOMS][DIMENSIONS];    // 5 atom species
-    int last_atom_idx[ATOM_TYPES] = {-1};
+    int last_atom_idx[ATOM_TYPES];
 } Neighbourhood;
 
 int type2index(char *type);
@@ -89,14 +89,6 @@ int read_data(const char *filename, int molecules_no)
             if (++count_atoms == molecule.atoms_no) // all atoms processed
             {
                 Neighbourhood *nhoods = molecule2neighbourhoods(&molecule);
-                for (int idx=0; idx<molecule.atoms_no; idx++)
-                {
-                    printf("%f ",nhoods[0].coords[0][idx][0]);
-                    printf("%f ",nhoods[0].coords[0][idx][1]);
-                    printf("%f\n",nhoods[0].coords[0][idx][2]);
-                }
-                printf("%d\n",nhoods[0].last_atom_idx[1]);
-                printf("\n");
                 free_nhood_array(nhoods);
             }
             break;
@@ -134,22 +126,25 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
     nhood_arr = (Neighbourhood *) malloc(max_total*sizeof(Neighbourhood));
     if (nhood_arr == NULL) exit (1);
 
+    /* set indices of empty arrays to -1 */
     for (int idx=0; idx<max_total; idx++)
     {
-        //memset(nhood_arr[idx].last_atom_idx,-1,ATOM_TYPES);
+        for (int type=0 ; type<ATOM_TYPES; type++)
+        {
+            nhood_arr[idx].last_atom_idx[type] = -1;
+        }
     }
 
     /* search for close neighbours */
     float c_i[DIMENSIONS];
     for (int i=0; i<atoms_no; i++)  // for center atom
     {
-        for (int idx;idx<DIMENSIONS;idx++) c_i[idx] = mol_ptr->ff_coords[i][idx];
+        for (int idx=0;idx<DIMENSIONS;idx++) c_i[idx] = mol_ptr->ff_coords[i][idx];
         for (int j=i; j<atoms_no; j++)  // for neighbouring atom
         {
-
             float norm = 0;
             float c_j[DIMENSIONS];
-            for (int idx;idx<DIMENSIONS;idx++)
+            for (int idx=0;idx<DIMENSIONS;idx++)
             {
                 c_j[idx] = mol_ptr->ff_coords[j][idx];
                 norm += pow((c_i[idx] - c_j[idx]),2);
@@ -162,8 +157,7 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
                 int neighbour_type = mol_ptr->atom_types[j];
                 nhood_arr[i].last_atom_idx[neighbour_type]++;
                 int last = nhood_arr[i].last_atom_idx[neighbour_type];
-                printf("%d\n",last);
-                for (int idx;idx<DIMENSIONS;idx++)
+                for (int idx=0;idx<DIMENSIONS;idx++)
                 {
                     nhood_arr[i].coords[neighbour_type][last][idx] = c_j[idx] - c_i[idx];
                 }
@@ -174,7 +168,7 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
                     neighbour_type = mol_ptr->atom_types[i];
                     nhood_arr[j].last_atom_idx[neighbour_type]++;
                     last = nhood_arr[j].last_atom_idx[neighbour_type];
-                    for (int idx;idx<DIMENSIONS;idx++)
+                    for (int idx=0;idx<DIMENSIONS;idx++)
                     {
                         nhood_arr[j].coords[neighbour_type][last][idx] = c_i[idx] - c_j[idx];
                     }
@@ -192,7 +186,7 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
         {
             last++;
             nhood_arr[last].last_atom_idx[type] = 0;
-            for (int idx;idx<DIMENSIONS;idx++)
+            for (int idx=0;idx<DIMENSIONS;idx++)
                 nhood_arr[last].coords[type][0][idx] = 0;
             lack--;
         }
