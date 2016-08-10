@@ -8,8 +8,7 @@
 Molecule *read_molecules(const char *filename, int molecules_no)
 {
     /* create molecule array */
-    Molecule *mol_arr;
-    mol_arr = (Molecule *) malloc(molecules_no*sizeof(Molecule));
+    Molecule *mol_arr = (Molecule *) malloc(molecules_no*sizeof(Molecule));
     if (mol_arr == NULL)
     {
         fprintf(stderr,"Not enough memory: molecules");
@@ -96,13 +95,13 @@ int type2index(char *type)
     return -1;
 }
 
+bool compare_molecules(Molecule mol1, Molecule mol2)
+{
+    return mol1.energy > mol2.energy;   //since energy is negative
+}
+
 int free_mol_array(Molecule *mol_arr)
 {
-    int len = sizeof(mol_arr)/sizeof(Molecule);
-    for (int idx=0; idx<len; idx++)
-    {
-        free(&mol_arr[idx]);
-    }
     free(mol_arr);
     return 0;
 }

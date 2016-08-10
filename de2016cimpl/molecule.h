@@ -18,5 +18,6 @@ typedef struct molecule
 Molecule *read_molecules(const char *filename, int molecules_no);
 int free_mol_array(Molecule *mol_arr);
 int type2index(char *type);
+bool compare_molecules(Molecule mol1, Molecule mol2);
 
 #endif // MOLECULE_H_INCLUDED

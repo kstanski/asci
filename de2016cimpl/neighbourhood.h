@@ -8,6 +8,7 @@
 #define MAX_N 3
 #define MAX_O 3
 #define MAX_S 1
+#define MAX_TOTAL (MAX_H+MAX_C+MAX_N+MAX_O+MAX_S)
 #define CUTOFF 3
 
 typedef struct neighbourhood

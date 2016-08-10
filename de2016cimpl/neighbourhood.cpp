@@ -10,9 +10,8 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
     /* create neighbourhood array */
     Neighbourhood *nhood_arr;
     int atoms_no = mol_ptr->atoms_no;
-    int max_total = MAX_H+MAX_C+MAX_N+MAX_O+MAX_S;
     int max_types[] = {MAX_H,MAX_C,MAX_N,MAX_O,MAX_S};
-    nhood_arr = (Neighbourhood *) malloc(max_total*sizeof(Neighbourhood));
+    nhood_arr = (Neighbourhood *) malloc(MAX_TOTAL*sizeof(Neighbourhood));
     if (nhood_arr == NULL)
     {
         fprintf(stderr,"Not enough memory: neighbourhoods");
@@ -20,7 +19,7 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
     }
 
     /* set indices of empty arrays to -1 */
-    for (int idx=0; idx<max_total; idx++)
+    for (int idx=0; idx<MAX_TOTAL; idx++)
     {
         for (int type=0 ; type<ATOM_TYPES; type++)
         {
@@ -90,11 +89,6 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
 
 int free_nhoods(Neighbourhood *nhoods)
 {
-    int len = sizeof(nhoods)/sizeof(Neighbourhood);
-    for (int idx=0; idx<len; idx++)
-    {
-        free(&nhoods[idx]);
-    }
     free(nhoods);
     return 0;
 }
