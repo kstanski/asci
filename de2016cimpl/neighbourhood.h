@@ -13,11 +13,13 @@
 
 typedef struct neighbourhood
 {
-    double coords[ATOM_TYPES][MAX_ATOMS][DIMENSIONS];    // 5 atom species
+    Position *coords[ATOM_TYPES];    // 5 atom species
     int last_atom_idx[ATOM_TYPES];
 } Neighbourhood;
 
 Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr);
-int free_nhoods(Neighbourhood *nhoods);
+Position pos_diff(Position a, Position b);
+Neighbourhood *create_nhoods(int nhood_no);
+int free_nhoods(Neighbourhood *nhoods, int nhood_no);
 
 #endif // NEIGHBOURHOOD_H_INCLUDED

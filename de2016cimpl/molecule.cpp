@@ -57,12 +57,14 @@ Molecule *read_molecules(const char *filename, int molecules_no)
             break;
         case 7:
             molecule->atom_types[count_atoms] = type2index(words[0]);
-            for (int i=0; i<3; i++)
+            double ff_pos[DIMENSIONS], dft_pos[DIMENSIONS];
+            for (int i=0; i<DIMENSIONS; i++)
             {
-                molecule->ff_coords[count_atoms][i] = atof(words[i+1]);
-                molecule->dft_coords[count_atoms][i] = atof(words[i+4]);
+                ff_pos[i] = atof(words[i+1]);
+                dft_pos[i] = atof(words[i+1+DIMENSIONS]);
             }
-
+            molecule->ff_coords[count_atoms] = make_position(ff_pos);
+            molecule->dft_coords[count_atoms] = make_position(dft_pos);
             molecule->types_total[type2index(words[0])]++;
 
             if (++count_atoms == molecule->atoms_no) // all atoms processed
@@ -93,6 +95,12 @@ int type2index(char *type)
     if (strcmp("S",type) == 0) return 4;
     fprintf(stderr,"Unknown atom type\n");
     return -1;
+}
+
+Position make_position(double *val_arr)
+{
+    Position pos(val_arr[0],val_arr[1],val_arr[2]);
+    return pos;
 }
 
 bool compare_molecules(Molecule mol1, Molecule mol2)

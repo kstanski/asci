@@ -17,16 +17,19 @@
 #include "local_similarity.h"
 #include "structural_similarity.h"
 
+#define LAMBDA pow(10,-12)
+#define ZETA 1
+
 int main()
 {
     namespace bnu = boost::numeric::ublas;
     /* read molecules from file */
     //char filename[] = "test_data.xyz";
     char filename[] = "dsgdb7ae2.xyz";
-    int molecules_no = 100;
+    int molecules_no = 40;
     Molecule *mol_arr = read_molecules(filename,molecules_no);
 
-    /* stratify and divide into training and validation */
+    /* stratify and divide into training and validation arrays */
     std::sort(mol_arr, mol_arr+molecules_no, compare_molecules);
     int train_no = 20;
     Molecule *train_mol[train_no];
@@ -39,55 +42,25 @@ int main()
 
 
     /* compute power spectra descriptors */
-    Descriptor train_desc[train_no];
-    for (int desc_idx=0; desc_idx<train_no; desc_idx++)
-    {
-        train_desc[desc_idx] = (Descriptor) malloc(MAX_TOTAL*sizeof(Power_spectrum *));
-        for (int atom_idx=0; atom_idx<MAX_TOTAL; atom_idx++)
-        {
-            train_desc[desc_idx][atom_idx] = (Power_spectrum *) malloc(ATOM_TYPES*sizeof(Power_spectrum));
-        }
-    }
-
+    Descriptor *train_desc = create_descriptor_arr(train_no);
     bnu::vector<double> energy(train_no);
     for (int mol_idx=0; mol_idx<train_no; mol_idx++)
     {
-        molecule2descriptor(train_mol[mol_idx],&(train_desc[mol_idx]));
+        molecule2descriptor(train_mol[mol_idx],train_desc[mol_idx]);
         energy(mol_idx) = train_mol[mol_idx]->energy;
     }
 
-    /* compute local similarity */
-    double *LS[train_no];
-    for (int mol_idx=0; mol_idx<train_no; mol_idx++)
+    /* compute self local similarity array */
+    double **LS = create_local_similarity_array(train_desc,train_no);
+    for (int i=0; i<train_no; i++)
     {
-        LS[mol_idx] = (double *) malloc(MAX_TOTAL*sizeof(double));
-        for (int atom_idx=0; atom_idx<MAX_TOTAL; atom_idx++)
-        {
-            double temp = local_similarity(train_desc[mol_idx][atom_idx],train_desc[mol_idx][atom_idx]);
-            //std::cout << temp;
-            LS[mol_idx][atom_idx] = temp;
-        }
-        //std::cout << std::endl;
-    }
-
-    for (int idx=0; idx<train_no; idx++)
-    {
-        for (int atom2=0; atom2<MAX_TOTAL; atom2++)
-        {
-            //std::cout << LS[idx][atom2];
-        }
-        //std::cout << std::endl;
+        for (int j=0; j<MAX_TOTAL; j++)
+            std::cout << LS[i][j];
+        std::cout << std::endl;
     }
 
     /* self structural similarty */
-    double SS[train_no];
-    for (int mol_idx=0; mol_idx<train_no; mol_idx++)
-    {
-        Descriptor mol_desc = train_desc[mol_idx];
-        double *LSA = LS[mol_idx];
-        SS[train_no] = structural_similarity(mol_desc,mol_desc,LSA,LSA);
-    }
-
+    double *SS = create_structural_similarity_array(train_desc,LS,train_no);
     for (int i=0; i<train_no; i++) std::cout << SS[i] << std::endl;
 
     /* cross structural similarity */
@@ -104,26 +77,66 @@ int main()
         }
     }
 
+    std::cout << std::endl;
     for (int idx=0; idx<train_no; idx++)
     {
         for (int idx2=0; idx2<train_no; idx2++)
-        {
-            std::cout << K(idx,idx2);
-        }
+            std::cout << K(idx,idx2) << " ";
         std::cout << std::endl;
     }
 
+    bnu::identity_matrix<double> eye(train_no);
+    K += LAMBDA*eye;
     invert_matrix(K,invK);
     bnu::vector<double> alpha = prod(invK,energy);
-
-
-
 
 
     /* VALIDATION */
 
 
+    /* compute power spectra descriptors */
+    Descriptor *validate_desc = create_descriptor_arr(validate_no);
+    bnu::vector<double> energy_p(validate_no);
+    for (int mol_idx=0; mol_idx<validate_no; mol_idx++)
+    {
+        molecule2descriptor(validate_mol[mol_idx],validate_desc[mol_idx]);
+        energy_p(mol_idx) = validate_mol[mol_idx]->energy;
+    }
 
+    /* compute self local similarity array */
+    double **LS_p = create_local_similarity_array(validate_desc,validate_no);
+    for (int i=0; i<validate_no; i++)
+    {
+        for (int j=0; j<MAX_TOTAL; j++)
+            std::cout << LS_p[i][j];
+        std::cout << std::endl;
+    }
+
+    /* self structural similarty */
+    double *SS_p = create_structural_similarity_array(validate_desc,LS_p,validate_no);
+    for (int i=0; i<validate_no; i++) std::cout << SS_p[i] << std::endl;
+
+    /* cross structural similarity */
+    bnu::matrix<double> L(train_no,validate_no);
+    for (int i=0; i<train_no; i++)
+    {
+        for (int j=0; j<validate_no; j++)
+        {
+            double l_ij = structural_similarity(train_desc[i],validate_desc[j],LS[i],LS_p[j]);
+            L(i,j) = l_ij / sqrt(SS[i]*SS_p[j]);
+        }
+    }
+
+    bnu::vector<double> f = prod(trans(L),alpha);
+
+    double mae = 0;
+    for (int p_idx=0; p_idx<validate_no; p_idx++)
+    {
+        mae += std::abs(energy_p(p_idx) - f(p_idx));
+    }
+    mae /= validate_no;
+
+    std::cout << "MAE: " << mae << std::endl;
 
     return 0;
 }

@@ -8,15 +8,9 @@
 Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
 {
     /* create neighbourhood array */
-    Neighbourhood *nhood_arr;
+    Neighbourhood *nhood_arr = create_nhoods(MAX_TOTAL);
     int atoms_no = mol_ptr->atoms_no;
     int max_types[] = {MAX_H,MAX_C,MAX_N,MAX_O,MAX_S};
-    nhood_arr = (Neighbourhood *) malloc(MAX_TOTAL*sizeof(Neighbourhood));
-    if (nhood_arr == NULL)
-    {
-        fprintf(stderr,"Not enough memory: neighbourhoods");
-        exit (1);
-    }
 
     /* set indices of empty arrays to -1 */
     for (int idx=0; idx<MAX_TOTAL; idx++)
@@ -28,31 +22,23 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
     }
 
     /* search for close neighbours */
-    double c_i[DIMENSIONS];
+    Position c_i;
     for (int i=0; i<atoms_no; i++)  // for center atom
     {
-        for (int idx=0;idx<DIMENSIONS;idx++) c_i[idx] = mol_ptr->ff_coords[i][idx];
+        c_i = mol_ptr->ff_coords[i];
         for (int j=i; j<atoms_no; j++)  // for neighbouring atom
         {
-            double norm = 0;
-            double c_j[DIMENSIONS];
-            for (int idx=0;idx<DIMENSIONS;idx++)
-            {
-                c_j[idx] = mol_ptr->ff_coords[j][idx];
-                norm += pow((c_i[idx] - c_j[idx]),2);
-            }
-            norm = sqrt(norm);
+            Position c_j;
+            c_j = mol_ptr->ff_coords[j];
 
-            if (norm < CUTOFF)
+            if (bg::distance(c_i,c_j) < CUTOFF)
             {
                 /* add neighbour of i */
                 int neighbour_type = mol_ptr->atom_types[j];
                 nhood_arr[i].last_atom_idx[neighbour_type]++;
                 int last = nhood_arr[i].last_atom_idx[neighbour_type];
-                for (int idx=0;idx<DIMENSIONS;idx++)
-                {
-                    nhood_arr[i].coords[neighbour_type][last][idx] = c_j[idx] - c_i[idx];
-                }
+                Position diff = pos_diff(c_j,c_i);
+                nhood_arr[i].coords[neighbour_type][last] = diff;
 
                 if (i != j)
                 {
@@ -60,10 +46,7 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
                     neighbour_type = mol_ptr->atom_types[i];
                     nhood_arr[j].last_atom_idx[neighbour_type]++;
                     last = nhood_arr[j].last_atom_idx[neighbour_type];
-                    for (int idx=0;idx<DIMENSIONS;idx++)
-                    {
-                        nhood_arr[j].coords[neighbour_type][last][idx] = c_i[idx] - c_j[idx];
-                    }
+                    nhood_arr[j].coords[neighbour_type][last] = diff;
                 }
             }
         }
@@ -78,8 +61,8 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
         {
             last++;
             nhood_arr[last].last_atom_idx[type] = 0;
-            for (int idx=0;idx<DIMENSIONS;idx++)
-                nhood_arr[last].coords[type][0][idx] = 0;
+            Position dummy(0,0,0);
+            nhood_arr[last].coords[type][0] = dummy;
             lack--;
         }
     }
@@ -87,8 +70,43 @@ Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
     return nhood_arr;
 }
 
-int free_nhoods(Neighbourhood *nhoods)
+Position pos_diff(Position a, Position b)
 {
+    Position diff;
+    diff.set<0>(a.get<0>() - b.get<0>());
+    diff.set<1>(a.get<1>() - b.get<1>());
+    diff.set<2>(a.get<2>() - b.get<2>());
+    return diff;
+}
+
+Neighbourhood *create_nhoods(int nhood_no)
+{
+    Neighbourhood *nhood_arr;
+    nhood_arr = (Neighbourhood *) malloc(nhood_no*sizeof(Neighbourhood));
+    for (int nhood_idx=0; nhood_idx<nhood_no; nhood_idx++)
+    {
+        for (int type=0; type<ATOM_TYPES; type++)
+        {
+            nhood_arr[nhood_idx].coords[type] = (Position *) malloc(MAX_ATOMS*sizeof(Position));
+        }
+    }
+    if (nhood_arr == NULL)
+    {
+        fprintf(stderr,"Not enough memory: neighbourhoods");
+        exit (1);
+    }
+    return nhood_arr;
+}
+
+int free_nhoods(Neighbourhood *nhoods, int nhood_no)
+{
+    for (int nhood_idx=0; nhood_idx<nhood_no; nhood_idx++)
+    {
+        for (int type=0; type<ATOM_TYPES; type++)
+        {
+            free(nhoods[nhood_idx].coords[type]);
+        }
+    }
     free(nhoods);
     return 0;
 }

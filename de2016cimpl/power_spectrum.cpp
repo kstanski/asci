@@ -9,9 +9,9 @@
 #include "power_spectrum.h"
 #include "neighbourhood.h"
 
-Power_spectrum coords2power_spectrum(double **coords, int coords_no)
+Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
 {
-    /* create a power spectrum (double array) */
+    /* create a power spectrum (vector of doubles) */
     int ps_length = (L_MAX+1)*pow(N_MAX,2);
     Power_spectrum ps(ps_length);
 
@@ -29,23 +29,7 @@ Power_spectrum coords2power_spectrum(double **coords, int coords_no)
         }
     }
 
-    /* initialise 2D complex array for spherical harmonics terms */
-    /*
-    std::complex<double> *sh[coords_no];
-    for (int atom_idx=0; atom_idx<coords_no; atom_idx++)
-    {
-        sh[atom_idx] = (std::complex<double> *) malloc((2*L_MAX+1)*sizeof(std::complex<double>));
-        if (sh[atom_idx] == NULL)
-        {
-            fprintf(stderr,"Not enough memory: spherical harmonics array");
-            exit (1);
-        }
-    }
-    */
-
     std::complex<double> sh[coords_no][2*L_MAX+1];
-
-    int temp_idx;
     for (int l=0; l<=L_MAX ; l++)
     {
         /* fill the spherical harmonics array */
@@ -72,21 +56,17 @@ Power_spectrum coords2power_spectrum(double **coords, int coords_no)
                         c2 += rbf[atom_idx][n2]*sh[atom_idx][m_idx];
                     }
 
-                    temp_idx = l*N_MAX*N_MAX + n1*N_MAX + n2;
-                    ps(temp_idx) += std::conj(c1)*c2;
+                    ps(get_ps_idx(l,n1,n2)) += std::conj(c1)*c2;
                     if (n1 != n2)
                     {
-                        temp_idx = l*N_MAX*N_MAX + n2*N_MAX + n1;
-                        ps(temp_idx) += std::conj(c2)*c1;
+                        ps(get_ps_idx(l,n2,n1)) += std::conj(c2)*c1;
                     }
                 }
 
-                temp_idx = l*N_MAX*N_MAX + n1*N_MAX + n2;
-                ps(temp_idx) *= sqrt(8/(2*l+1));
+                ps(get_ps_idx(l,n1,n2)) *= sqrt(8/(2*l+1));
                 if (n1 != n2)
                 {
-                    temp_idx = l*N_MAX*N_MAX + n2*N_MAX + n1;
-                    ps(temp_idx) *= sqrt(8/(2*l+1));
+                    ps(get_ps_idx(l,n2,n1)) *= sqrt(8/(2*l+1));
                 }
             }
         }
@@ -99,60 +79,26 @@ Power_spectrum coords2power_spectrum(double **coords, int coords_no)
     return ps;
 }
 
-int cart2sph(double **coords, int coords_no, double *phi, double *theta, double *r)
+int cart2sph(Position *coords, int coords_no, double *phi, double *theta, double *r)
 {
     namespace bg = boost::geometry;
-    bg::model::point<double, 3, bg::cs::cartesian> cart;
-    bg::model::point<double, 3, bg::cs::spherical<bg::radian> > sph;
+    bg::model::point<double, DIMENSIONS, bg::cs::spherical<bg::radian> > sph;
 
     for (int idx=0; idx<coords_no; idx++)
     {
-        bg::set<0>(cart, coords[idx][0]);
-        bg::set<1>(cart, coords[idx][1]);
-        bg::set<2>(cart, coords[idx][2]);
-        bg::transform(cart, sph);
+        bg::transform(coords[idx], sph);
         phi[idx] = bg::get<0>(sph);
         theta[idx] = bg::get<1>(sph);
         r[idx] = bg::get<2>(sph);
     }
     return 0;
 }
-/*
-double get_element(Power_spectrum ps,int l, int n1, int n2)
+
+int get_ps_idx(int l, int n1, int n2)
 {
-    if (l > L_MAX || n1 > N_MAX-1 || n2 > N_MAX-1)
-    {
-        fprintf(stderr,"Index out of bound: power spectrum (get)");
-        exit (1);
-    }
-    int idx = l*pow(N_MAX,2) + n1*N_MAX + n2;
-    return ps[idx];
+    return l*N_MAX*N_MAX + n1*N_MAX + n2;
 }
 
-int set_element(Power_spectrum ps,int l, int n1, int n2, double element)
-{
-    if (l > L_MAX || n1 > N_MAX-1 || n2 > N_MAX-1)
-    {
-        fprintf(stderr,"Index out of bound: power spectrum (set)");
-        exit (1);
-    }
-    int idx = l*pow(N_MAX,2) + n1*N_MAX + n2;
-    ps[idx] = element;
-    return 0;
-}
-
-int spherical_harmonics(std::complex<double> **sh, int coords_no, int l, double *theta, double *phi)
-{
-    for (int idx=0; idx<coords_no; idx++)
-    {
-        for (int m=-l; m<=l; m++)
-        {
-            sh[idx][m+l] = boost::math::spherical_harmonic(l,m,theta[idx],phi[idx]);
-        }
-    }
-    return 0;
-}
-*/
 double radial_basis_function(double r,double cutoff,int n,int n_max)
 {
     double S[n_max][n_max];
