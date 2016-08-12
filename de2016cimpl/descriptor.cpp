@@ -8,7 +8,6 @@
 int molecule2descriptor(Molecule *mol_ptr, Descriptor desc)
 {
     Neighbourhood *nhoods = molecule2neighbourhoods(mol_ptr);
-
     for (int atom_idx=0; atom_idx<MAX_TOTAL; atom_idx++)
     {
         for (int type=0; type<ATOM_TYPES; type++)
@@ -18,7 +17,6 @@ int molecule2descriptor(Molecule *mol_ptr, Descriptor desc)
             desc[atom_idx][type] = coords2power_spectrum(coords,coords_no);
         }
     }
-
     free_nhoods(nhoods,MAX_TOTAL);
     return 0;
 }

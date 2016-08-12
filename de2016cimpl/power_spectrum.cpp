@@ -62,7 +62,6 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
                         ps(get_ps_idx(l,n2,n1)) += std::conj(c2)*c1;
                     }
                 }
-
                 ps(get_ps_idx(l,n1,n2)) *= sqrt(8/(2*l+1));
                 if (n1 != n2)
                 {
@@ -106,14 +105,14 @@ double radial_basis_function(double r,double cutoff,int n,int n_max)
         for (int j=0; j<n_max; j++)
             S[i][j] = sqrt((5+2*i)*(5+2*j))/(5+i+j);
 
-    //W = S^-0.5
+    //can also try W = S^-0.5
 
     double g = 0;
     double n_alpha;
     for (int alpha=0; alpha<n_max; alpha++)
     {
         n_alpha = sqrt(pow(cutoff,(2*alpha+5))/(2*alpha+5));
-        g += S[n][alpha] * pow(cutoff-r,alpha+2)/n_alpha;    //change to W
+        g += S[n][alpha] * pow(cutoff-r,alpha+2)/n_alpha;
     }
 
     return g;
