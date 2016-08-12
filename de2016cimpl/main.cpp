@@ -26,12 +26,12 @@ int main()
     /* read molecules from file */
     //char filename[] = "test_data.xyz";
     char filename[] = "dsgdb7ae2.xyz";
-    int molecules_no = 100;
+    int molecules_no = 20;
     Molecule *mol_arr = read_molecules(filename,molecules_no);
 
     /* stratify and divide into training and validation arrays */
     std::sort(mol_arr, mol_arr+molecules_no, compare_molecules);
-    int train_no = 50;
+    int train_no = 10;
     Molecule *train_mol[train_no];
     int validate_no = molecules_no - train_no;
     Molecule *validate_mol[validate_no];
@@ -92,8 +92,8 @@ int main()
     }
     std::cout << "done" << std::endl;
     /* free self similarity arrays */
-    free_ls_arr(LS);
-    free_ls_arr(LS_p);
+    free_ls_arr(LS,train_no);
+    free_ls_arr(LS_p,validate_no);
     free_ss_arr(SS);
     free_ss_arr(SS_p);
 
