@@ -46,6 +46,8 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
         {
             for (int n2=0; n2<=n1; n2++)
             {
+                std::complex<double> ps_elem1 = 0;
+                std::complex<double> ps_elem2 = 0;
                 for (int m_idx=0; m_idx<2*l+1; m_idx++)
                 {
                     std::complex<double> c1 = 0;
@@ -56,16 +58,16 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
                         c2 += rbf[atom_idx][n2]*sh[atom_idx][m_idx];
                     }
 
-                    ps(get_ps_idx(l,n1,n2)) += std::conj(c1)*c2;
+                    ps_elem1 += std::conj(c1)*c2;
                     if (n1 != n2)
                     {
-                        ps(get_ps_idx(l,n2,n1)) += std::conj(c2)*c1;
+                        ps_elem2 += std::conj(c2)*c1;
                     }
                 }
-                ps(get_ps_idx(l,n1,n2)) *= sqrt(8/(2*l+1));
+                ps(get_ps_idx(l,n1,n2)) = ps_elem1 * sqrt(8/(2*l+1));
                 if (n1 != n2)
                 {
-                    ps(get_ps_idx(l,n2,n1)) *= sqrt(8/(2*l+1));
+                    ps(get_ps_idx(l,n2,n1)) = ps_elem2 * sqrt(8/(2*l+1));
                 }
             }
         }

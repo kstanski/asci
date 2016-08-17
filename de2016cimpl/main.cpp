@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>
+#include <time.h>
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -67,7 +68,15 @@ int main()
     std::cout << "cross structural similarity:" << std::endl;
     /* cross structural similarity */
     std::cout << "training matrix..." << std::endl;
-    bnu::matrix<double> K(train_no,train_no), invK(train_no,train_no);
+
+    clock_t start, end;
+    start = clock();
+    structural_similarity(train_desc[train_no-1],train_desc[train_no-2],LS[train_no-1],LS[train_no-2]);
+    end = clock();
+    std::cout << ((double) (end - start)) / CLOCKS_PER_SEC << std::endl;
+
+    bnu::matrix<double> K(train_no,train_no);
+    //#pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
     {
         K(i,i) = 1;
@@ -82,11 +91,13 @@ int main()
     std::cout << "done" << std::endl;
     std::cout << "validation matrix..." << std::endl;
     bnu::matrix<double> L(train_no,validate_no);
+    #pragma omp parallel for schedule(static)
     for (int i=0; i<train_no; i++)
     {
         for (int j=0; j<validate_no; j++)
         {
             double l_ij = structural_similarity(train_desc[i],validate_desc[j],LS[i],LS_p[j]);
+            if (isnan(l_ij)) std::cout << l_ij << std::endl;
             L(i,j) = l_ij / sqrt(SS[i]*SS_p[j]);
         }
     }
@@ -104,6 +115,7 @@ int main()
             K(i,j) = pow(K(i,j),ZETA);
     bnu::identity_matrix<double> eye(train_no);
     K += LAMBDA*eye;    //apply ridge parameter
+    bnu::matrix<double> invK(train_no,train_no);
     invert_matrix(K,invK);
     bnu::vector<double> alpha = prod(invK,energy);
 
@@ -114,19 +126,22 @@ int main()
 
     /* stats */
     std::cout << "stats:" << std::endl;
-    double err;
+    double mre = 0;
     double mae = 0;
     double rmse = 0;
     for (int p_idx=0; p_idx<validate_no; p_idx++)
     {
-        err = energy_p(p_idx) - f(p_idx);
+        double err = energy_p(p_idx) - f(p_idx);
+        mre += std::abs(err/energy_p(p_idx));
         mae += std::abs(err);
         rmse += pow(err,2);
     }
+    mre /= validate_no;
     mae /= validate_no;
     rmse /= validate_no;
     rmse = sqrt(rmse);
 
+    std::cout << "MRE: " << mre*100 << "%" << std::endl;
     std::cout << "MAE: " << mae << std::endl;
     std::cout << "RMSE: " << rmse << std::endl;
 
