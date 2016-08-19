@@ -27,7 +27,7 @@ int main()
     /* read molecules from file */
     //char filename[] = "test_data.xyz";
     char filename[] = "dsgdb7ae2.xyz";
-    int molecules_no = 20;
+    int molecules_no = 90;
     Molecule *mol_arr = read_molecules(filename,molecules_no);
 
     /* stratify and divide into training and validation arrays */
@@ -43,12 +43,14 @@ int main()
     Descriptor *train_desc = create_descriptor_arr(train_no);
     Descriptor *validate_desc = create_descriptor_arr(validate_no);
     bnu::vector<double> energy(train_no);
+    #pragma omp parallel for schedule(dynamic)
     for (int mol_idx=0; mol_idx<train_no; mol_idx++)
     {
         molecule2descriptor(train_mol[mol_idx],train_desc[mol_idx]);
         energy(mol_idx) = train_mol[mol_idx]->energy;
     }
     bnu::vector<double> energy_p(validate_no);
+    #pragma omp parallel for schedule(dynamic)
     for (int mol_idx=0; mol_idx<validate_no; mol_idx++)
     {
         molecule2descriptor(validate_mol[mol_idx],validate_desc[mol_idx]);
@@ -68,15 +70,15 @@ int main()
     std::cout << "cross structural similarity:" << std::endl;
     /* cross structural similarity */
     std::cout << "training matrix..." << std::endl;
-
+/*
     clock_t start, end;
     start = clock();
     structural_similarity(train_desc[train_no-1],train_desc[train_no-2],LS[train_no-1],LS[train_no-2]);
     end = clock();
     std::cout << ((double) (end - start)) / CLOCKS_PER_SEC << std::endl;
-
+*/
     bnu::matrix<double> K(train_no,train_no);
-    //#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
     {
         K(i,i) = 1;
@@ -91,13 +93,12 @@ int main()
     std::cout << "done" << std::endl;
     std::cout << "validation matrix..." << std::endl;
     bnu::matrix<double> L(train_no,validate_no);
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
     {
         for (int j=0; j<validate_no; j++)
         {
             double l_ij = structural_similarity(train_desc[i],validate_desc[j],LS[i],LS_p[j]);
-            if (isnan(l_ij)) std::cout << l_ij << std::endl;
             L(i,j) = l_ij / sqrt(SS[i]*SS_p[j]);
         }
     }

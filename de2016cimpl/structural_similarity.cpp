@@ -54,6 +54,7 @@ double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LS
 double *create_structural_similarity_array(Descriptor *desc_arr, double **ls_arr, int desc_no)
 {
     double *ss_arr = (double *) malloc(desc_no*sizeof(double));
+    #pragma omp parallel for schedule(dynamic)
     for (int mol_idx=0; mol_idx<desc_no; mol_idx++)
     {
         Descriptor mol_desc = desc_arr[mol_idx];

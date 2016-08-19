@@ -6,13 +6,16 @@
 
 #include "molecule.h"
 
-#define L_MAX 5
-#define N_MAX 5
+#define L_MAX 12
+#define N_MAX 10
 
-typedef boost::numeric::ublas::vector<std::complex<double> > Power_spectrum;
+typedef float ps_element_type;
+typedef boost::numeric::ublas::vector<ps_element_type> Power_spectrum;
 Power_spectrum coords2power_spectrum(Position *coords, int coords_no);
 int cart2sph(Position *coords, int coords_no, double *phi, double *theta, double *r);
+ps_element_type sh_real_form(int l, int m, double theta, double phi);
 int get_ps_idx(int l, int n1, int n2);
-double radial_basis_function(double r,double cutoff,int n,int n_max);
+ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max);
+double dot_prod(Power_spectrum *A, Power_spectrum *B);
 
 #endif // POWER_SPECTRUM_H_INCLUDED

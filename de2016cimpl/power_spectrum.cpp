@@ -20,7 +20,7 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
     cart2sph(coords, coords_no, phi, theta, r);
 
     /* radial basis functions */
-    double rbf[coords_no][N_MAX];
+    ps_element_type rbf[coords_no][N_MAX];
     for (int idx=0; idx<coords_no; idx++)
     {
         for (int n=0; n<N_MAX; n++)
@@ -29,7 +29,7 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
         }
     }
 
-    std::complex<double> sh[coords_no][2*L_MAX+1];
+    ps_element_type sh[coords_no][2*L_MAX+1];
     for (int l=0; l<=L_MAX ; l++)
     {
         /* fill the spherical harmonics array */
@@ -37,7 +37,8 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
         {
             for (int m_idx=0; m_idx<2*l+1; m_idx++)
             {
-                sh[atom_idx][m_idx] = boost::math::spherical_harmonic(l,m_idx-l,theta[atom_idx],phi[atom_idx]);
+                //sh[atom_idx][m_idx] = boost::math::spherical_harmonic(l,m_idx-l,theta[atom_idx],phi[atom_idx]);
+                sh[atom_idx][m_idx] = sh_real_form(l,m_idx-l,theta[atom_idx],phi[atom_idx]);
             }
         }
 
@@ -46,22 +47,22 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
         {
             for (int n2=0; n2<=n1; n2++)
             {
-                std::complex<double> ps_elem1 = 0;
-                std::complex<double> ps_elem2 = 0;
+                ps_element_type ps_elem1 = 0;
+                ps_element_type ps_elem2 = 0;
                 for (int m_idx=0; m_idx<2*l+1; m_idx++)
                 {
-                    std::complex<double> c1 = 0;
-                    std::complex<double> c2 = 0;
+                    ps_element_type c1 = 0;
+                    ps_element_type c2 = 0;
                     for (int atom_idx=0; atom_idx<coords_no; atom_idx++)
                     {
                         c1 += rbf[atom_idx][n1]*sh[atom_idx][m_idx];
                         c2 += rbf[atom_idx][n2]*sh[atom_idx][m_idx];
                     }
 
-                    ps_elem1 += std::conj(c1)*c2;
+                    ps_elem1 += c1*c2;
                     if (n1 != n2)
                     {
-                        ps_elem2 += std::conj(c2)*c1;
+                        ps_elem2 += c2*c1;
                     }
                 }
                 ps(get_ps_idx(l,n1,n2)) = ps_elem1 * sqrt(8/(2*l+1));
@@ -74,8 +75,8 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
     }
 
     /* normalise */
-    std::complex<double> norm = norm_2(ps);
-    if (norm != std::complex<double>(0,0)) ps /= norm;
+    ps_element_type norm = sqrt(dot_prod(&ps,&ps));
+    if (norm != 0) ps /= norm;
 
     return ps;
 }
@@ -95,12 +96,23 @@ int cart2sph(Position *coords, int coords_no, double *phi, double *theta, double
     return 0;
 }
 
+ps_element_type sh_real_form(int l, int m, double theta, double phi)
+{
+    std::complex<ps_element_type> sh = (std::complex<ps_element_type>) boost::math::spherical_harmonic(l,std::abs(m),theta,phi);
+    if (m == 0)
+        return std::real(sh);
+    else if (m < 0)
+        return sqrt(2) * pow(-1,m) * std::imag(sh);
+    else
+        return sqrt(2) * pow(-1,m) * std::real(sh);
+}
+
 int get_ps_idx(int l, int n1, int n2)
 {
     return l*N_MAX*N_MAX + n1*N_MAX + n2;
 }
 
-double radial_basis_function(double r,double cutoff,int n,int n_max)
+ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max)
 {
     double S[n_max][n_max];
     for (int i=0; i<n_max; i++)
@@ -109,7 +121,7 @@ double radial_basis_function(double r,double cutoff,int n,int n_max)
 
     //can also try W = S^-0.5
 
-    double g = 0;
+    ps_element_type g = 0;
     double n_alpha;
     for (int alpha=0; alpha<n_max; alpha++)
     {
@@ -118,4 +130,9 @@ double radial_basis_function(double r,double cutoff,int n,int n_max)
     }
 
     return g;
+}
+
+double dot_prod(Power_spectrum *A, Power_spectrum *B)
+{
+    return inner_prod(*A,*B);
 }
