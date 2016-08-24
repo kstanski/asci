@@ -40,7 +40,7 @@ double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LS
     {
         for (int j=0; j<MAX_TOTAL; j++)
         {
-            Sink(i,j) *= u(i)*v(j);   //not sure about the order of i,j and u,v in this line (there is a typo in the original paper)
+            Sink(i,j) *= u(i)*v(j);
         }
     }
 

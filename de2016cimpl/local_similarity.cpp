@@ -27,7 +27,7 @@ double local_similarity(Power_spectrum *S1, Power_spectrum *S2)
         {
             if (similarity_kernel[i][j] != 0)
             {
-                double dot = dot_prod(S1+i,S2+j);
+                double dot = dot_prod(S1[i],S2[j]);
                 sum += similarity_kernel[i][j] * pow(dot,LOCAL_ZETA);
             }
         }

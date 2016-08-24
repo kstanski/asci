@@ -41,6 +41,8 @@ int free_desc_arr(Descriptor *desc_arr, int desc_no)
     {
         for (int atom_idx=0; atom_idx<MAX_TOTAL; atom_idx++)
         {
+            for (int type=0; type<ATOM_TYPES; type++)
+                free(desc_arr[desc_idx][atom_idx][type]);
             free(desc_arr[desc_idx][atom_idx]);
         }
         free(desc_arr[desc_idx]);

@@ -19,10 +19,10 @@ typedef struct molecule
     Position dft_coords[MAX_ATOMS];
 } Molecule;
 
-Molecule *read_molecules(const char *filename, int molecules_no);
-int free_mol_array(Molecule *mol_arr);
+Molecule **read_molecules(const char *filename, int molecules_no);
+int free_mol_array(Molecule **mol_arr, int molecules_no);
 int type2index(char *type);
 Position make_position(double *val_arr);
-bool compare_molecules(Molecule mol1, Molecule mol2);
+bool compare_molecules(Molecule *mol1, Molecule *mol2);
 
 #endif // MOLECULE_H_INCLUDED

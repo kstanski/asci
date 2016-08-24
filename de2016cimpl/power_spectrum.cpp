@@ -3,17 +3,21 @@
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/geometry.hpp>
+#include <boost/simd/pack.hpp>
+#include <boost/simd/function/load.hpp>
+#include <boost/simd/function/sum.hpp>
 
 #include <stdlib.h>
 
 #include "power_spectrum.h"
 #include "neighbourhood.h"
+#include "invert_matrix.h"
 
 Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
 {
     /* create a power spectrum (vector of doubles) */
-    int ps_length = (L_MAX+1)*pow(N_MAX,2);
-    Power_spectrum ps(ps_length);
+    //int ps_length = (L_MAX+1)*pow(N_MAX,2);
+    Power_spectrum ps = (Power_spectrum) malloc(PS_LEN*sizeof(ps_element_type));
 
     /* convert cartesian to spherical */
     double phi[coords_no], theta[coords_no], r[coords_no];
@@ -37,7 +41,6 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
         {
             for (int m_idx=0; m_idx<2*l+1; m_idx++)
             {
-                //sh[atom_idx][m_idx] = boost::math::spherical_harmonic(l,m_idx-l,theta[atom_idx],phi[atom_idx]);
                 sh[atom_idx][m_idx] = sh_real_form(l,m_idx-l,theta[atom_idx],phi[atom_idx]);
             }
         }
@@ -65,18 +68,16 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
                         ps_elem2 += c2*c1;
                     }
                 }
-                ps(get_ps_idx(l,n1,n2)) = ps_elem1 * sqrt(8/(2*l+1));
+                ps[get_ps_idx(l,n1,n2)] = ps_elem1 * sqrt(8/(2*l+1));
                 if (n1 != n2)
                 {
-                    ps(get_ps_idx(l,n2,n1)) = ps_elem2 * sqrt(8/(2*l+1));
+                    ps[get_ps_idx(l,n2,n1)] = ps_elem2 * sqrt(8/(2*l+1));
                 }
             }
         }
     }
 
-    /* normalise */
-    ps_element_type norm = sqrt(dot_prod(&ps,&ps));
-    if (norm != 0) ps /= norm;
+    normalise(ps);
 
     return ps;
 }
@@ -114,25 +115,64 @@ int get_ps_idx(int l, int n1, int n2)
 
 ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max)
 {
-    double S[n_max][n_max];
+    namespace bnu = boost::numeric::ublas;
+    bnu::matrix<double> S(n_max,n_max), W(n_max,n_max);
     for (int i=0; i<n_max; i++)
-        for (int j=0; j<n_max; j++)
-            S[i][j] = sqrt((5+2*i)*(5+2*j))/(5+i+j);
+    {
+        S(i,i) = 1;
+        for (int j=0; j<i; j++)
+        {
+             double val = sqrt((5+2*i)*(5+2*j))/(5+i+j);
+             S(i,j) = val;
+             S(j,i) = val;
+        }
+    }
 
     //can also try W = S^-0.5
+    //invert_matrix(S,W);
+    W = S;
 
     ps_element_type g = 0;
     double n_alpha;
     for (int alpha=0; alpha<n_max; alpha++)
     {
         n_alpha = sqrt(pow(cutoff,(2*alpha+5))/(2*alpha+5));
-        g += S[n][alpha] * pow(cutoff-r,alpha+2)/n_alpha;
+        g += W(n,alpha) * pow(cutoff-r,alpha+2)/n_alpha;
     }
 
     return g;
 }
 
-double dot_prod(Power_spectrum *A, Power_spectrum *B)
+double dot_prod(Power_spectrum A, Power_spectrum B)
 {
-    return inner_prod(*A,*B);
+    namespace bs = boost::simd;
+    using pack = bs::pack<ps_element_type>;
+    size_t pack_card = bs::cardinal_of<pack>();
+
+    pack p_dot{0}, p_A, p_B;
+    int iter_no = PS_LEN/pack_card;
+
+    for (int i=0; i<iter_no; i++)
+    {
+        int idx = i*pack_card;
+        p_A = bs::load<pack>(A + idx);
+        p_B = bs::load<pack>(B + idx);
+        p_dot += p_A * p_B;
+    }
+
+    double dot = bs::sum(p_dot);
+    for (int i=iter_no*pack_card; i<PS_LEN; i++)
+        dot += A[i] * B[i];
+
+    return dot;
+}
+
+int normalise(Power_spectrum ps)
+{
+    ps_element_type norm = sqrt(dot_prod(ps,ps));
+    if (norm != 0)
+    {
+        for (int i=0; i<PS_LEN; i++) ps[i] /= norm;
+    }
+    return 0;
 }

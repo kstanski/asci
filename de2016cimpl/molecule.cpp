@@ -5,14 +5,13 @@
 
 #include "molecule.h"
 
-Molecule *read_molecules(const char *filename, int molecules_no)
+Molecule **read_molecules(const char *filename, int molecules_no)
 {
     /* create molecule array */
-    Molecule *mol_arr = (Molecule *) malloc(molecules_no*sizeof(Molecule));
-    if (mol_arr == NULL)
+    Molecule **mol_arr = (Molecule **) malloc(molecules_no*sizeof(Molecule *));
+    for (int i=0; i<molecules_no; i++)
     {
-        fprintf(stderr,"Not enough memory: molecules");
-        exit (1);
+        mol_arr[i] = (Molecule *) malloc(sizeof(Molecule));
     }
 
     /* open file for reading */
@@ -28,7 +27,7 @@ Molecule *read_molecules(const char *filename, int molecules_no)
     char buf[256];
     int count_molecules = 0;
     int count_atoms = 0;
-    Molecule *molecule = mol_arr;   // points to the first Molecule.
+    Molecule *molecule = *mol_arr;   // points to the first Molecule.
 
     while (fgets(buf, sizeof(buf), fp) && count_molecules < molecules_no)
     {
@@ -70,7 +69,7 @@ Molecule *read_molecules(const char *filename, int molecules_no)
             if (++count_atoms == molecule->atoms_no) // all atoms processed
             {
                 count_molecules++;
-                molecule++; // move pointer to the next Molecule.
+                molecule = mol_arr[count_molecules]; // move pointer to the next Molecule.
             }
             break;
         default :
@@ -103,13 +102,17 @@ Position make_position(double *val_arr)
     return pos;
 }
 
-bool compare_molecules(Molecule mol1, Molecule mol2)
+bool compare_molecules(Molecule *mol1, Molecule *mol2)
 {
-    return mol1.energy > mol2.energy;   //since energy is negative
+    return (*mol1).energy > (*mol2).energy;   //since energy is negative
 }
 
-int free_mol_array(Molecule *mol_arr)
+int free_mol_array(Molecule **mol_arr, int molecules_no)
 {
+    for (int i=0; i<molecules_no; i++)
+    {
+        free(mol_arr[i]);
+    }
     free(mol_arr);
     return 0;
 }

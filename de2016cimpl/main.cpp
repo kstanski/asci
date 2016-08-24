@@ -27,16 +27,22 @@ int main()
     /* read molecules from file */
     //char filename[] = "test_data.xyz";
     char filename[] = "dsgdb7ae2.xyz";
-    int molecules_no = 90;
-    Molecule *mol_arr = read_molecules(filename,molecules_no);
+    int molecules_no = 7102;
+    Molecule **mol_arr = read_molecules(filename,molecules_no);
 
     /* stratify and divide into training and validation arrays */
     std::sort(mol_arr, mol_arr+molecules_no, compare_molecules);
-    int train_no = 10;
+    int sample_no = 500;
+    int hold_out_no = molecules_no - sample_no;
+    Molecule *sample_mol[sample_no];
+    Molecule *hold_out[hold_out_no];
+    stratify(mol_arr, sample_mol, sample_no, hold_out, hold_out_no);
+
+    int train_no = 350;
+    int validate_no = sample_no - train_no;
     Molecule *train_mol[train_no];
-    int validate_no = molecules_no - train_no;
     Molecule *validate_mol[validate_no];
-    stratify(mol_arr, train_mol, train_no, validate_mol, validate_no);
+    stratify(sample_mol, train_mol, train_no, validate_mol, validate_no);
 
     /* compute power spectra descriptors */
     std::cout << "computing power spectra descriptors" << std::endl;
@@ -56,7 +62,7 @@ int main()
         molecule2descriptor(validate_mol[mol_idx],validate_desc[mol_idx]);
         energy_p(mol_idx) = validate_mol[mol_idx]->energy;
     }
-    free_mol_array(mol_arr);
+    free_mol_array(mol_arr, molecules_no);
 
     std::cout << "computing self similarity" << std::endl;   //for efficient normalisation
     /* compute self local similarity array */
@@ -70,13 +76,7 @@ int main()
     std::cout << "cross structural similarity:" << std::endl;
     /* cross structural similarity */
     std::cout << "training matrix..." << std::endl;
-/*
-    clock_t start, end;
-    start = clock();
-    structural_similarity(train_desc[train_no-1],train_desc[train_no-2],LS[train_no-1],LS[train_no-2]);
-    end = clock();
-    std::cout << ((double) (end - start)) / CLOCKS_PER_SEC << std::endl;
-*/
+
     bnu::matrix<double> K(train_no,train_no);
     #pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
@@ -103,7 +103,9 @@ int main()
         }
     }
     std::cout << "done" << std::endl;
-    /* free self similarity arrays */
+    /* free unused arrays */
+    free_desc_arr(train_desc,train_no);
+    free_desc_arr(validate_desc,validate_no);
     free_ls_arr(LS,train_no);
     free_ls_arr(LS_p,validate_no);
     free_ss_arr(SS);
