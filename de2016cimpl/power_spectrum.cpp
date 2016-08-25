@@ -11,7 +11,6 @@
 
 #include "power_spectrum.h"
 #include "neighbourhood.h"
-#include "invert_matrix.h"
 
 Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
 {
@@ -116,11 +115,10 @@ int get_ps_idx(int l, int n1, int n2)
 ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max)
 {
     namespace bnu = boost::numeric::ublas;
-    bnu::matrix<double> S(n_max,n_max), W(n_max,n_max);
+    bnu::matrix<double> S(n_max,n_max);
     for (int i=0; i<n_max; i++)
     {
-        S(i,i) = 1;
-        for (int j=0; j<i; j++)
+        for (int j=0; j<=i; j++)
         {
              double val = sqrt((5+2*i)*(5+2*j))/(5+i+j);
              S(i,j) = val;
@@ -128,16 +126,12 @@ ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max)
         }
     }
 
-    //can also try W = S^-0.5
-    //invert_matrix(S,W);
-    W = S;
-
     ps_element_type g = 0;
     double n_alpha;
     for (int alpha=0; alpha<n_max; alpha++)
     {
         n_alpha = sqrt(pow(cutoff,(2*alpha+5))/(2*alpha+5));
-        g += W(n,alpha) * pow(cutoff-r,alpha+2)/n_alpha;
+        g += S(n,alpha) * pow(cutoff-r,alpha+2)/n_alpha;
     }
 
     return g;

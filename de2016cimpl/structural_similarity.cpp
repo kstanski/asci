@@ -8,7 +8,7 @@
 #include "neighbourhood.h"
 #include "local_similarity.h"
 
-double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LSB)
+double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LSB, double *diag)
 {
     namespace bnu = boost::numeric::ublas;
     bnu::matrix<double> C(MAX_TOTAL, MAX_TOTAL);
@@ -18,7 +18,7 @@ double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LS
     {
         for (int j=0; j<MAX_TOTAL; j++)
         {
-            double ls = local_similarity(A[i],B[j])/sqrt(LSA[i]*LSB[j]);    //normalised
+            double ls = local_similarity(A[i],B[j],diag)/sqrt(LSA[i]*LSB[j]);    //normalised
             C(i,j) = ls;
             Sink(i,j) = exp((ls-1)/REG_PARAM);
         }
@@ -51,7 +51,7 @@ double structural_similarity(Descriptor A, Descriptor B, double *LSA, double *LS
     return trace;
 }
 
-double *create_structural_similarity_array(Descriptor *desc_arr, double **ls_arr, int desc_no)
+double *create_structural_similarity_array(Descriptor *desc_arr, double **ls_arr, int desc_no, double *diag)
 {
     double *ss_arr = (double *) malloc(desc_no*sizeof(double));
     #pragma omp parallel for schedule(dynamic)
@@ -59,7 +59,7 @@ double *create_structural_similarity_array(Descriptor *desc_arr, double **ls_arr
     {
         Descriptor mol_desc = desc_arr[mol_idx];
         double *LSA = ls_arr[mol_idx];
-        ss_arr[mol_idx] = structural_similarity(mol_desc,mol_desc,LSA,LSA);
+        ss_arr[mol_idx] = structural_similarity(mol_desc,mol_desc,LSA,LSA,diag);
     }
     return ss_arr;
 }

@@ -1,16 +1,19 @@
 #ifndef MOLECULE_H_INCLUDED
 #define MOLECULE_H_INCLUDED
 
+#define ID_LEN 8
 #define MAX_ATOMS 23
 #define ATOM_TYPES 5
 #define DIMENSIONS 3
 
 #include <boost/geometry.hpp>
+
 namespace bg = boost::geometry;
 typedef bg::model::point<double, DIMENSIONS, bg::cs::cartesian> Position;
 
 typedef struct molecule
 {
+    char id[ID_LEN];
     double energy;
     int atoms_no;
     int atom_types[MAX_ATOMS];  // index of [H,C,N,O,S]

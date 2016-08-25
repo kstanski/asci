@@ -52,6 +52,7 @@ Molecule **read_molecules(const char *filename, int molecules_no)
             molecule->atoms_no = atoi(words[0]);
             break;
         case 2:
+            strncpy(molecule->id,words[0],ID_LEN);
             molecule->energy = atof(words[1]);
             break;
         case 7:
