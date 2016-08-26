@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
 #include "neighbourhood.h"
+#include "molecule.h"
 
 Neighbourhood *molecule2neighbourhoods(Molecule *mol_ptr)
 {

@@ -1,25 +1,13 @@
-#include <fstream>
-#include <string>
-#include <stdlib.h>
 #include <iostream>
-#include <algorithm>
 #include <math.h>
-#include <time.h>
-
-#include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include "molecule.h"
-#include "neighbourhood.h"
-#include "power_spectrum.h"
 #include "solver.h"
-#include "stratify.h"
 #include "descriptor.h"
 #include "local_similarity.h"
 #include "structural_similarity.h"
 #include "stats.h"
 #include "setup.h"
-
 #include "run.h"
 
 Stats run(Dataset *dset, Params params)
@@ -34,20 +22,21 @@ Stats run(Dataset *dset, Params params)
     bnu::vector<double> energy_p(validate_no);
     for (int i=0; i<validate_no; i++) energy_p(i) = dset->validate_val[i];
     double *diag = params.diag;
-
-    std::cout << "computing self similarity" << std::endl;   //for efficient normalisation
-    /* compute self local similarity array */
+#if VERBOSE
+    std::cout << "computing self similarity" << std::endl;
+#endif // VERBOSE
+    /* compute self local similarity array */   //for efficient normalisation
     double **LS = create_local_similarity_array(train_desc,train_no,diag);
     double **LS_p = create_local_similarity_array(validate_desc,validate_no,diag);
 
     /* self structural similarty */
     double *SS = create_structural_similarity_array(train_desc,LS,train_no,diag);
     double *SS_p = create_structural_similarity_array(validate_desc,LS_p,validate_no,diag);
-
+#if VERBOSE
     std::cout << "cross structural similarity:" << std::endl;
-    /* cross structural similarity */
     std::cout << "training matrix..." << std::endl;
-
+#endif // VERBOSE
+    /* cross structural similarity */
     bnu::matrix<double> K(train_no,train_no);
     #pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
@@ -57,12 +46,15 @@ Stats run(Dataset *dset, Params params)
         {
             double k_ij = structural_similarity(train_desc[i],train_desc[j],LS[i],LS[j],diag);
             k_ij /= sqrt(SS[i]*SS[j]);
+            k_ij = pow(k_ij,params.zeta);
             K(i,j) = k_ij;
             K(j,i) = k_ij;
         }
     }
+#if VERBOSE
     std::cout << "done" << std::endl;
     std::cout << "validation matrix..." << std::endl;
+#endif // VERBOSE
     bnu::matrix<double> L(train_no,validate_no);
     #pragma omp parallel for schedule(dynamic)
     for (int i=0; i<train_no; i++)
@@ -70,23 +62,23 @@ Stats run(Dataset *dset, Params params)
         for (int j=0; j<validate_no; j++)
         {
             double l_ij = structural_similarity(train_desc[i],validate_desc[j],LS[i],LS_p[j],diag);
-            L(i,j) = l_ij / sqrt(SS[i]*SS_p[j]);
+            l_ij /= sqrt(SS[i]*SS_p[j]);
+            L(i,j) = pow(l_ij,params.zeta);
         }
     }
+#if VERBOSE
     std::cout << "done" << std::endl;
+#endif // VERBOSE
     /* free unused arrays */
-    free_desc_arr(train_desc,train_no);
-    free_desc_arr(validate_desc,validate_no);
     free_ls_arr(LS,train_no);
     free_ls_arr(LS_p,validate_no);
     free_ss_arr(SS);
     free_ss_arr(SS_p);
 
     /* TRAINING */
+#if VERBOSE
     std::cout << "solving linear system" << std::endl;
-    for (int i=0; i<train_no; i++)
-        for (int j=0; j<train_no; j++)
-            K(i,j) = pow(K(i,j),params.zeta);
+#endif // VERBOSE
     bnu::identity_matrix<double> eye(train_no);
     K += params.lamdba*eye;    //apply ridge parameter
 
@@ -95,14 +87,14 @@ Stats run(Dataset *dset, Params params)
     if (res != 0) std::cout << "cannot solve the linear system" << std::endl;;
 
     /* VALIDATION */
+#if VERBOSE
     std::cout << "producing predictions" << std::endl;
+#endif // VERBOSE
     bnu::vector<double> f = prod(trans(L),alpha);
-    std::cout << std::endl;
 
     /* stats */
-    std::cout << "stats:" << std::endl;
-
+#if VERBOSE
     output_plot_data(energy_p,f);
-
+#endif // VERBOSE
     return produce_stats(energy_p,f);
 }

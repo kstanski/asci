@@ -1,8 +1,8 @@
-
-#include <stdlib.h>
 #include <iostream>
 #include <fstream>
+
 #include "stats.h"
+#include "setup.h"
 
 Stats produce_stats(bnu::vector<double> vals, bnu::vector<double> prediction)
 {
@@ -21,18 +21,20 @@ Stats produce_stats(bnu::vector<double> vals, bnu::vector<double> prediction)
     s.mae /= len;
     s.rmse /= len;
     s.rmse = sqrt(s.rmse);
-
+#if VERBOSE
+    std::cout << std::endl << "stats:" << std::endl;
     std::cout << "RE_MAX: " << s.re_max*100 << "%" << std::endl;
     std::cout << "MRE: " << s.mre*100 << "%" << std::endl;
     std::cout << "MAE: " << s.mae << std::endl;
     std::cout << "RMSE: " << s.rmse << std::endl;
+#endif // VERBOSE
     return s;
 }
 
 int output_plot_data(bnu::vector<double> vals, bnu::vector<double> prediction)
 {
     std::ofstream file;
-    file.open ("data.txt");
+    file.open ("plot_data.txt");
     int len = vals.size();
     for (int idx=0; idx<len; idx++)
         file << vals(idx) << " " << prediction(idx) << std::endl;

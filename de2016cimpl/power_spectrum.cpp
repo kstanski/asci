@@ -1,5 +1,5 @@
+#include <stdlib.h>
 #include <complex>
-#include <math.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/geometry.hpp>
@@ -7,10 +7,9 @@
 #include <boost/simd/function/load.hpp>
 #include <boost/simd/function/sum.hpp>
 
-#include <stdlib.h>
-
 #include "power_spectrum.h"
 #include "neighbourhood.h"
+#include "molecule.h"
 
 Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
 {
@@ -85,12 +84,13 @@ int cart2sph(Position *coords, int coords_no, double *phi, double *theta, double
 {
     namespace bg = boost::geometry;
     bg::model::point<double, DIMENSIONS, bg::cs::spherical<bg::radian> > sph;
-
     for (int idx=0; idx<coords_no; idx++)
     {
         bg::transform(coords[idx], sph);
         phi[idx] = bg::get<0>(sph);
-        theta[idx] = bg::get<1>(sph);
+        if (std::sin(phi[idx]) != 0)
+            theta[idx] = bg::get<1>(sph);
+        else theta[idx] = 0;
         r[idx] = bg::get<2>(sph);
     }
     return 0;

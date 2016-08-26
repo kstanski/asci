@@ -2,13 +2,13 @@
 #define RUN_H_INCLUDED
 
 #include "setup.h"
-#include "molecule.h"
+#include "stats.h"
 
 typedef struct params
 {
     double lamdba;
     double zeta;
-    double diag[ATOM_TYPES];
+    double *diag;
 } Params;
 
 Stats run(Dataset *dset, Params params);

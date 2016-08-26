@@ -1,9 +1,9 @@
 #include <math.h>
-#include <stdlib.h>
 
 #include "local_similarity.h"
 #include "neighbourhood.h"
-#include "molecule.h"
+
+#define LOCAL_ZETA 1
 
 double local_similarity(Power_spectrum *S1, Power_spectrum *S2, double *diag)
 {

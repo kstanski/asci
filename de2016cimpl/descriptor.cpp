@@ -1,6 +1,3 @@
-
-#include <stdlib.h>
-
 #include "descriptor.h"
 #include "neighbourhood.h"
 #include "power_spectrum.h"

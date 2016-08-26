@@ -1,9 +1,6 @@
 #ifndef POWER_SPECTRUM_H_INCLUDED
 #define POWER_SPECTRUM_H_INCLUDED
 
-#include <complex>
-#include <boost/numeric/ublas/vector.hpp>
-
 #include "molecule.h"
 
 #define L_MAX 12
