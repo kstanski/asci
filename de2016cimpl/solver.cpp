@@ -17,3 +17,16 @@ int solve_linear_system(const bnu::matrix<double>& A, bnu::vector<double>& x, bn
 
 	return 0;
 }
+
+int invert_matrix(const bnu::matrix<double>& input, bnu::matrix<double>& inverse)
+{
+    using namespace boost::numeric::ublas;
+    matrix<double> A(input);
+    permutation_matrix<std::size_t> pm(A.size1());
+    int res = lu_factorize(A, pm);
+    if (res != 0) return 1;
+    inverse.assign(identity_matrix<double> (A.size1()));
+    lu_substitute(A, pm, inverse);
+
+    return 0;
+}

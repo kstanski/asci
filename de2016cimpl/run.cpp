@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <math.h>
 #include <boost/numeric/ublas/matrix.hpp>
 
@@ -81,20 +82,33 @@ Stats run(Dataset *dset, Params params)
 #endif // VERBOSE
     bnu::identity_matrix<double> eye(train_no);
     K += params.lamdba*eye;    //apply ridge parameter
-
     bnu::vector<double> alpha (train_no);
     int res = solve_linear_system(K,alpha,energy);
-    if (res != 0) std::cout << "cannot solve the linear system" << std::endl;;
-
-    /* VALIDATION */
+    if (res == 0)
+    {
+        /* VALIDATION */
 #if VERBOSE
-    std::cout << "producing predictions" << std::endl;
+        std::cout << "producing predictions" << std::endl;
 #endif // VERBOSE
-    bnu::vector<double> f = prod(trans(L),alpha);
+        bnu::vector<double> f = prod(trans(L),alpha);
 
-    /* stats */
+        /* stats */
 #if VERBOSE
-    output_plot_data(energy_p,f);
+        output_plot_data(energy_p,f);
 #endif // VERBOSE
-    return produce_stats(energy_p,f);
+        return produce_stats(energy_p,f);
+    }
+    else
+    {
+#if VERBOSE
+        std::cout << "cannot solve the linear system" << std::endl;
+#endif // VERBOSE
+        Stats s;
+        double dmax = std::numeric_limits<double>::max();
+        s.re_max = dmax;
+        s.mre = dmax;
+        s.mae = dmax;
+        s.rmse = dmax;
+        return s;
+    }
 }

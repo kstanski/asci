@@ -19,7 +19,7 @@ int main()
     double diag[] = {1,1,1,1,1};    //H,C,N,O,S
     params.diag = diag;
     Stats s = run(dset,params);
-    std::cout << s.mae << std::endl;
+    std::cout << "MAE: " << s.mae << std::endl;
     free_dataset(dset);
 
     return 0;

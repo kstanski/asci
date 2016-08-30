@@ -10,6 +10,7 @@
 #include "power_spectrum.h"
 #include "neighbourhood.h"
 #include "molecule.h"
+#include "solver.h"
 
 Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
 {
@@ -22,12 +23,13 @@ Power_spectrum coords2power_spectrum(Position *coords, int coords_no)
     cart2sph(coords, coords_no, phi, theta, r);
 
     /* radial basis functions */
+    Coeff_matrix W = create_coeff_matrix(N_MAX);
     ps_element_type rbf[coords_no][N_MAX];
     for (int idx=0; idx<coords_no; idx++)
     {
         for (int n=0; n<N_MAX; n++)
         {
-            rbf[idx][n] = radial_basis_function(r[idx],CUTOFF,n,N_MAX);
+            rbf[idx][n] = radial_basis_function(r[idx],CUTOFF,n,N_MAX,W);
         }
     }
 
@@ -112,26 +114,32 @@ int get_ps_idx(int l, int n1, int n2)
     return l*N_MAX*N_MAX + n1*N_MAX + n2;
 }
 
-ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max)
+Coeff_matrix create_coeff_matrix(int n_max)
 {
-    namespace bnu = boost::numeric::ublas;
-    bnu::matrix<double> S(n_max,n_max);
+    Coeff_matrix S(n_max,n_max), W(n_max,n_max);
     for (int i=0; i<n_max; i++)
     {
         for (int j=0; j<=i; j++)
         {
-             double val = sqrt((5+2*i)*(5+2*j))/(5+i+j);
-             S(i,j) = val;
-             S(j,i) = val;
+            double val = sqrt(((5+2*i)*(5+2*j))/(5+i+j));
+            S(i,j) = val;
+            S(j,i) = val;
         }
     }
+    S = prod(S,S);
+    invert_matrix(S,W);
 
+    return W;
+}
+
+ps_element_type radial_basis_function(double r,double cutoff,int n,int n_max, Coeff_matrix& W)
+{
     ps_element_type g = 0;
     double n_alpha;
     for (int alpha=0; alpha<n_max; alpha++)
     {
         n_alpha = sqrt(pow(cutoff,(2*alpha+5))/(2*alpha+5));
-        g += S(n,alpha) * pow(cutoff-r,alpha+2)/n_alpha;
+        g += W(n,alpha) * pow(cutoff-r,alpha+2)/n_alpha;
     }
 
     return g;

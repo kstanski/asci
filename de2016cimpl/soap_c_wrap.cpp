@@ -5,12 +5,12 @@
 #include "soap_c_wrap.h"
 
 extern "C" {
-    Dset *setup_soap(const char *filename, int molecules_no, int train_no, int validate_no)
+    void *setup_soap(const char *filename, int molecules_no, int train_no, int validate_no)
     {
         return setup(filename,molecules_no,train_no,validate_no);
     }
 
-    double run_soap(Dset *dset, double *params)
+    double run_soap(void *dset, double *params)
     {
         Params p;
         double diag[ATOM_TYPES];    //H,C,N,O,S
@@ -18,13 +18,13 @@ extern "C" {
         p.diag = diag;
         p.lamdba = params[ATOM_TYPES];
         p.zeta = params[ATOM_TYPES+1];
-        Stats s = run(dset,params);
+        Stats s = run((Dataset *)dset,p);
         return s.mae;
     }
 
-    int free_dset(Dset *dset)
+    int free_dset(void *dset)
     {
-        free_dataset(dset);
+        free_dataset((Dataset *)dset);
         return 0;
     }
 }
